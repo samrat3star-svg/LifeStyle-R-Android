@@ -13,7 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -161,7 +161,13 @@ class FastingDashboardViewModel @Inject constructor(
         }
     }
 
-    fun loadSettings(sheetName: String) {
+    fun loadSettings(sheetName: String, forceRefresh: Boolean = false) {
+        // If not forcing refresh and we already have some data/syncing, don't trigger a new network call
+        if (!forceRefresh && (_state.value.startTime != "--:--" || isSyncing)) {
+            android.util.Log.d("FastingDashboard", "loadSettings: Using cached/existing state, skipping network call.")
+            return
+        }
+        
         viewModelScope.launch {
             loadSettingsInternal(sheetName)
         }
@@ -216,6 +222,23 @@ class FastingDashboardViewModel @Inject constructor(
                 if (lockoutMillis > 0) {
                     android.util.Log.d("FastingDashboard", "loadSettings: Entering lockout for ${lockoutMillis}ms")
                     delay(lockoutMillis)
+                    
+                    // Concurrent pre-fetch for other screens while in lockout
+                    viewModelScope.launch {
+                        try {
+                            val sheet = preferenceManager.getSheetName() ?: return@launch
+                            android.util.Log.d("FastingDashboard", "Pre-fetching all data for $sheet")
+                            kotlinx.coroutines.coroutineScope {
+                                val measurements = async { clientRepository.getMeasurements(sheet) }
+                                val breaks = async { clientRepository.getBreaks(sheet) }
+                                measurements.await()
+                                breaks.await()
+                            }
+                            android.util.Log.d("FastingDashboard", "Pre-fetch COMPLETED")
+                        } catch (e: Exception) {
+                            android.util.Log.e("FastingDashboard", "Pre-fetch FAILED: ${e.message}")
+                        }
+                    }
                 }
 
                 android.util.Log.d("FastingDashboard", "loadSettings: SETTING isLoading=FALSE")
@@ -230,14 +253,6 @@ class FastingDashboardViewModel @Inject constructor(
                 
                 // Force reset the background timer ONLY AFTER success
                 pollingManager.setupPollingWorker(force = true)
-                
-                // Prefetch other data to populate cache if this is a manual/initial sync
-                if (lockoutMillis > 0) {
-                    viewModelScope.launch {
-                        clientRepository.getMeasurements(sheetName)
-                        clientRepository.getBreaks(sheetName)
-                    }
-                }
             }.onFailure { e ->
                 android.util.Log.e("FastingDashboard", "loadSettings FAILURE: ${e.message}")
                 preferenceManager.saveLastSyncError(e.message)

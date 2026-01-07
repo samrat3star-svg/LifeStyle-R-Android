@@ -102,6 +102,14 @@ class FastingForegroundService : Service() {
                             // Use Repository to hit CACHE first (populated by Atomic Update)
                             val settings = clientRepository.getFastingSettings(sheetName)
                             
+                            // CONCURRENT PRE-FETCH: Fetch Measurements and Breaks while already syncing
+                            kotlinx.coroutines.coroutineScope {
+                               val m = async { clientRepository.getMeasurements(sheetName) }
+                               val b = async { clientRepository.getBreaks(sheetName) }
+                               m.await()
+                               b.await()
+                            }
+                            
                             // Ensure the "Syncing..." spinner shows for at least 2 seconds
                             delay(2000)
                             

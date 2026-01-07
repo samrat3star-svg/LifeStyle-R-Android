@@ -61,7 +61,6 @@ class MeasurementsFragment : Fragment() {
     }
 
     private fun fetchMeasurements(sheetName: String) {
-        binding.progressBar.visibility = View.VISIBLE
         
         lifecycleScope.launch {
             try {

@@ -61,7 +61,8 @@ class BreaksFragment : Fragment() {
     }
 
     private fun fetchBreaks(sheetName: String) {
-        binding.progressBar.visibility = View.VISIBLE
+        // Only show progress bar if we don't have cached data visible (implicitly handled by fast repo)
+        // For now, we'll keep it simple: repo is fast on cache.
         
         lifecycleScope.launch {
             try {

@@ -16,9 +16,8 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class FastingPollingWorker(
     appContext: Context,
@@ -28,7 +27,7 @@ class FastingPollingWorker(
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface FastingWorkerEntryPoint {
-        fun apiService(): ApiService
+        fun clientRepository(): com.lifestyler.android.domain.repository.ClientRepository
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -48,18 +47,28 @@ class FastingPollingWorker(
             return@withContext Result.failure()
         }
         
-        // 2. Access ApiService via EntryPoint ...
+        // 2. Access ClientRepository via EntryPoint for CACHE support
         val entryPoint = EntryPointAccessors.fromApplication(
             applicationContext,
             FastingWorkerEntryPoint::class.java
         )
-        val apiService = entryPoint.apiService()
+        val clientRepository = entryPoint.clientRepository()
 
         try {
             android.util.Log.d(tag, "doWork: Fetching latest schedule for $sheetName")
-            // 3. Fetch latest schedule
-            val response = apiService.getClientSettings("getClientSettings", sheetName)
-            if (response.isSuccessful) {
+            
+            // CACHE FIX: Force fresh fetch for auto-sync by clearing cache first
+            clientRepository.clearCache()
+            
+            // 3. Fetch latest schedule + pre-fetch others for cache
+            val settings = clientRepository.getFastingSettings(sheetName)
+            
+            kotlinx.coroutines.coroutineScope {
+                launch { clientRepository.getMeasurements(sheetName) }
+                launch { clientRepository.getBreaks(sheetName) }
+            }
+            
+            if (settings.success) {
                 android.util.Log.d(tag, "doWork: Sync successful")
                 // Success: clear error and update sync time
                 preferenceManager.saveLastSyncError(null)
@@ -73,42 +82,39 @@ class FastingPollingWorker(
                     android.util.Log.d(tag, "doWork: Updated nextSyncTime for PeriodicWork: $nextSync")
                 }
                 
-                val settings = response.body()
-                if (settings?.success == true) {
-                    val newStartTime = settings.startTime ?: "--:--"
-                    val newEndTime = settings.endTime ?: "--:--"
-                    val newFastingHours = settings.fastingHours ?: "--"
-                    
-                    val lastStartTime = preferenceManager.getLastStartTime()
-                    val lastEndTime = preferenceManager.getLastEndTime()
-                    val lastFastingHours = preferenceManager.getLastFastingHours()
+                val newStartTime = settings.startTime ?: "--:--"
+                val newEndTime = settings.endTime ?: "--:--"
+                val newFastingHours = settings.fastingHours ?: "--"
+                
+                val lastStartTime = preferenceManager.getLastStartTime()
+                val lastEndTime = preferenceManager.getLastEndTime()
+                val lastFastingHours = preferenceManager.getLastFastingHours()
 
-                    // 4. Compare and Trigger Alarm
-                    val isChanged = (lastStartTime != newStartTime) ||
-                                    (lastEndTime != newEndTime) ||
-                                    (lastFastingHours != newFastingHours)
+                // 4. Compare and Trigger Alarm
+                val isChanged = (lastStartTime != newStartTime) ||
+                                (lastEndTime != newEndTime) ||
+                                (lastFastingHours != newFastingHours)
 
-                    android.util.Log.d(tag, "doWork Check: last=[$lastStartTime, $lastEndTime, $lastFastingHours], new=[$newStartTime, $newEndTime, $newFastingHours], isChanged=$isChanged")
+                android.util.Log.d(tag, "doWork Check: last=[$lastStartTime, $lastEndTime, $lastFastingHours], new=[$newStartTime, $newEndTime, $newFastingHours], isChanged=$isChanged")
 
-                    if (isChanged) {
-                        android.util.Log.i(tag, "doWork: Data CHANGE detected! Triggering Alarm. AlarmEnabled=${preferenceManager.isAlarmEnabled()}")
-                        if (preferenceManager.isAlarmEnabled()) {
-                            val uri = preferenceManager.getAlarmRingtoneUri()
-                            AlarmNotificationHelper.triggerAlarm(
-                                applicationContext, 
-                                uri,
-                                "Fasting schedule updated: $newStartTime - $newEndTime ($newFastingHours hrs)"
-                            )
-                        }
+                if (isChanged) {
+                    android.util.Log.i(tag, "doWork: Data CHANGE detected! Triggering Alarm. AlarmEnabled=${preferenceManager.isAlarmEnabled()}")
+                    if (preferenceManager.isAlarmEnabled()) {
+                        val uri = preferenceManager.getAlarmRingtoneUri()
+                        AlarmNotificationHelper.triggerAlarm(
+                            applicationContext, 
+                            uri,
+                            "Fasting schedule updated: $newStartTime - $newEndTime ($newFastingHours hrs)"
+                        )
                     }
-                    
-                    // Always update the last known state
-                    preferenceManager.saveLastStartTime(newStartTime)
-                    preferenceManager.saveLastEndTime(newEndTime)
-                    preferenceManager.saveLastFastingHours(newFastingHours)
                 }
+                
+                // Always update the last known state
+                preferenceManager.saveLastStartTime(newStartTime)
+                preferenceManager.saveLastEndTime(newEndTime)
+                preferenceManager.saveLastFastingHours(newFastingHours)
             } else {
-                val errorMsg = "Server Error: ${response.code()}"
+                val errorMsg = "Sync Failed: ${settings.message}"
                 android.util.Log.e(tag, "doWork: $errorMsg")
                 preferenceManager.saveLastSyncError(errorMsg)
             }
