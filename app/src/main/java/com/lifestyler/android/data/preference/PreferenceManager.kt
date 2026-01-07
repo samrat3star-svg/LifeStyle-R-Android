@@ -59,19 +59,19 @@ class PreferenceManager(context: Context) {
         prefs.edit().putBoolean(KEY_POLLING_ENABLED, enabled).apply()
     }
 
-    fun isPollingEnabled(): Boolean = prefs.getBoolean(KEY_POLLING_ENABLED, false)
+    fun isPollingEnabled(): Boolean = prefs.getBoolean(KEY_POLLING_ENABLED, true)
 
     fun setPollingInterval(minutes: Int) {
         prefs.edit().putInt(KEY_POLLING_INTERVAL, minutes).apply()
     }
 
-    fun getPollingInterval(): Int = prefs.getInt(KEY_POLLING_INTERVAL, 1)
+    fun getPollingInterval(): Int = prefs.getInt(KEY_POLLING_INTERVAL, 15)
 
     fun setAlarmEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_ALARM_ENABLED, enabled).apply()
     }
 
-    fun isAlarmEnabled(): Boolean = prefs.getBoolean(KEY_ALARM_ENABLED, false)
+    fun isAlarmEnabled(): Boolean = prefs.getBoolean(KEY_ALARM_ENABLED, true)
 
     fun setAlarmRingtoneUri(uri: String) {
         prefs.edit().putString(KEY_ALARM_RINGTONE_URI, uri).apply()

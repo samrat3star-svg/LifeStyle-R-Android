@@ -35,6 +35,9 @@ class MainActivity : AppCompatActivity() {
         
         preferenceManager = PreferenceManager(this)
         
+        // Initialize default ringtone if not set
+        preferenceManager.initializeDefaultRingtone(this)
+        
         // Check for updates
         checkForUpdates()
         
