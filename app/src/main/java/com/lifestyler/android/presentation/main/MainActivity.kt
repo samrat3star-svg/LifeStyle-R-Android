@@ -18,6 +18,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     @javax.inject.Inject
     lateinit var pollingManager: com.lifestyler.android.data.manager.PollingManager
+    @javax.inject.Inject
+    lateinit var checkForUpdateUseCase: com.lifestyler.android.domain.usecase.CheckForUpdateUseCase
+    @javax.inject.Inject
+    lateinit var updateManager: com.lifestyler.android.presentation.util.UpdateManager
+    
     private lateinit var preferenceManager: PreferenceManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,6 +33,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         
         preferenceManager = PreferenceManager(this)
+        
+        // Check for updates
+        checkForUpdates()
         
         // 2. Enable edge-to-edge (Modern & Robust)
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -44,6 +52,31 @@ class MainActivity : AppCompatActivity() {
         checkNotificationPermission()
         setupNavigation()
         setupPollingWorker()
+    }
+
+    private fun checkForUpdates() {
+        androidx.lifecycle.lifecycleScope.launchWhenStarted {
+            val result = checkForUpdateUseCase()
+            result.onSuccess { updateInfo ->
+                if (updateInfo != null) {
+                    showUpdateDialog(updateInfo)
+                }
+            }.onFailure {
+                // Silently ignore update check failures
+            }
+        }
+    }
+
+    private fun showUpdateDialog(updateInfo: com.lifestyler.android.domain.entity.UpdateInfo) {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Update Available")
+            .setMessage("A new version (${updateInfo.version}) is available. Would you like to update now?\n\nWhat's new:\n${updateInfo.releaseNotes}")
+            .setPositiveButton("Update") { _, _ ->
+                updateManager.downloadAndInstall(updateInfo.downloadUrl, "LifeStyle-R-${updateInfo.version}.apk")
+                com.google.android.material.snackbar.Snackbar.make(binding.root, "Downloading update...", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Later", null)
+            .show()
     }
 
     private fun checkNotificationPermission() {

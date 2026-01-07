@@ -13,6 +13,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -54,4 +55,21 @@ object NetworkModule {
     fun provideApiService(retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
     }
-} 
+
+    @Provides
+    @Singleton
+    @Named("GithubRetrofit")
+    fun provideGithubRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://api.github.com/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGithubApiService(@Named("GithubRetrofit") retrofit: Retrofit): com.lifestyler.android.data.api.GithubApiService {
+        return retrofit.create(com.lifestyler.android.data.api.GithubApiService::class.java)
+    }
+}
