@@ -21,6 +21,13 @@ class SettingsFragment : Fragment() {
     private val binding get() = _binding!!
     @javax.inject.Inject
     lateinit var pollingManager: com.lifestyler.android.data.manager.PollingManager
+    @javax.inject.Inject
+    lateinit var checkForUpdateUseCase: com.lifestyler.android.domain.usecase.CheckForUpdateUseCase
+    @javax.inject.Inject
+    lateinit var updateManager: com.lifestyler.android.presentation.util.UpdateManager
+    @javax.inject.Inject
+    lateinit var clientRepository: com.lifestyler.android.domain.repository.ClientRepository
+    
     private lateinit var preferenceManager: PreferenceManager
     
     private val ringtoneLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -68,6 +75,9 @@ class SettingsFragment : Fragment() {
         
         val ringtoneName = preferenceManager.getAlarmRingtoneName() ?: "Default"
         binding.selectedRingtoneText.text = ringtoneName
+
+        // Display current version
+        binding.versionText.text = "Version ${com.lifestyler.android.BuildConfig.VERSION_NAME}"
     }
 
     private fun setupListeners() {
@@ -94,6 +104,36 @@ class SettingsFragment : Fragment() {
             }
             startActivity(intent)
             activity?.finish()
+        }
+
+        binding.checkUpdateButton.setOnClickListener {
+            checkForManualUpdate()
+        }
+    }
+
+    private fun checkForManualUpdate() {
+        binding.checkUpdateButton.isEnabled = false
+        binding.checkUpdateButton.text = "Checking..."
+        
+        androidx.lifecycle.lifecycleScope.launchWhenStarted {
+            checkForUpdateUseCase().onSuccess { updateInfo ->
+                binding.checkUpdateButton.isEnabled = true
+                binding.checkUpdateButton.text = "Check for Updates"
+                
+                if (updateInfo != null) {
+                    binding.updateNowButton.visibility = View.VISIBLE
+                    binding.updateNowButton.text = "Update to ${updateInfo.version}"
+                    binding.updateNowButton.setOnClickListener {
+                        updateManager.downloadAndInstall(updateInfo.downloadUrl, "LifeStyle-R-${updateInfo.version}.apk")
+                    }
+                } else {
+                    android.widget.Toast.makeText(requireContext(), "Your app is up to date! ✅", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }.onFailure {
+                binding.checkUpdateButton.isEnabled = true
+                binding.checkUpdateButton.text = "Check for Updates"
+                android.widget.Toast.makeText(requireContext(), "Failed to check for updates: ${it.message}", android.widget.Toast.LENGTH_SHORT).show()
+            }
         }
     }
     

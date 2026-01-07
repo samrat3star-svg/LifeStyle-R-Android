@@ -22,7 +22,7 @@ class BreaksFragment : Fragment() {
     private val binding get() = _binding!!
     
     @Inject
-    lateinit var apiService: ApiService
+    lateinit var clientRepository: com.lifestyler.android.domain.repository.ClientRepository
     
     private val adapter = BreaksAdapter()
     private lateinit var preferenceManager: PreferenceManager
@@ -65,10 +65,9 @@ class BreaksFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
-                // Assuming "getbreaks" action is implemented
-                val response = apiService.getBreaks("getbreaks", sheetName)
-                if (response.isSuccessful && response.body()?.success == true) {
-                    val data = response.body()!!
+                val result = clientRepository.getBreaks(sheetName)
+                if (result.success) {
+                    val data = result
                     val items = data.breaks ?: emptyList()
                     
                     if (items.isEmpty()) {

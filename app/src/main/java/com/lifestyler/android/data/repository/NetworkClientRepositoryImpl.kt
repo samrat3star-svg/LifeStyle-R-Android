@@ -15,10 +15,18 @@ class NetworkClientRepositoryImpl @Inject constructor(
     private val apiService: ApiService
 ) : ClientRepository {
 
+    private var cachedFastingSettings: Map<String, FastingSettingsResponse> = emptyMap()
+    private var cachedMeasurements: Map<String, com.lifestyler.android.data.model.MeasurementsResponse> = emptyMap()
+    private var cachedBreaks: Map<String, com.lifestyler.android.data.model.BreaksResponse> = emptyMap()
+    private var cachedClients: List<Client>? = null
+
     override suspend fun getAllClients(): List<Client> {
+        cachedClients?.let { return it }
         val response = apiService.getAllClients()
         if (response.isSuccessful) {
-            return response.body()?.data ?: emptyList()
+            val clients = response.body()?.data ?: emptyList()
+            cachedClients = clients
+            return clients
         } else {
             throw Exception("Failed to fetch clients: ${response.message()}")
         }
@@ -104,12 +112,21 @@ class NetworkClientRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getFastingSettings(sheetName: String): FastingSettingsResponse {
+        cachedFastingSettings[sheetName]?.let { 
+            android.util.Log.d("NetworkRepo", "getFastingSettings returning CACHED data for $sheetName")
+            return it 
+        }
+        
         android.util.Log.d("NetworkRepo", "getFastingSettings calling API for $sheetName")
         val response = apiService.getClientSettings(action = "getClientSettings", sheetName = sheetName)
         if (response.isSuccessful) {
             val body = response.body()
             android.util.Log.d("NetworkRepo", "getFastingSettings SUCCESS: body=$body")
-            return body ?: FastingSettingsResponse(false, null, null, null, null, false, "Empty response body")
+            val result = body ?: FastingSettingsResponse(false, null, null, null, null, false, "Empty response body")
+            if (result.success) {
+                cachedFastingSettings = cachedFastingSettings + (sheetName to result)
+            }
+            return result
         } else {
             android.util.Log.e("NetworkRepo", "getFastingSettings ERROR: code=${response.code()}, msg=${response.message()}")
             return FastingSettingsResponse(false, null, null, null, null, false, "Failed to fetch settings: ${response.message()}")
@@ -132,5 +149,40 @@ class NetworkClientRepositoryImpl @Inject constructor(
         } else {
             return LogFastingResponse(false, "Failed to follow fasting: ${response.message()}")
         }
+    }
+
+    override suspend fun getMeasurements(sheetName: String): com.lifestyler.android.data.model.MeasurementsResponse {
+        cachedMeasurements[sheetName]?.let { return it }
+        val response = apiService.getMeasurements(action = "getMeasurements", sheetName = sheetName)
+        if (response.isSuccessful) {
+            val result = response.body() ?: com.lifestyler.android.data.model.MeasurementsResponse(false, null, null, null, "Empty response body")
+            if (result.success) {
+                cachedMeasurements = cachedMeasurements + (sheetName to result)
+            }
+            return result
+        } else {
+            return com.lifestyler.android.data.model.MeasurementsResponse(false, null, null, null, "Failed: ${response.message()}")
+        }
+    }
+
+    override suspend fun getBreaks(sheetName: String): com.lifestyler.android.data.model.BreaksResponse {
+        cachedBreaks[sheetName]?.let { return it }
+        val response = apiService.getBreaks(action = "getBreaks", sheetName = sheetName)
+        if (response.isSuccessful) {
+            val result = response.body() ?: com.lifestyler.android.data.model.BreaksResponse(false, null, "Empty response body")
+            if (result.success) {
+                cachedBreaks = cachedBreaks + (sheetName to result)
+            }
+            return result
+        } else {
+            return com.lifestyler.android.data.model.BreaksResponse(false, null, "Failed: ${response.message()}")
+        }
+    }
+
+    override fun clearCache() {
+        cachedFastingSettings = emptyMap()
+        cachedMeasurements = emptyMap()
+        cachedBreaks = emptyMap()
+        cachedClients = null
     }
 }

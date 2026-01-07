@@ -22,7 +22,7 @@ class MeasurementsFragment : Fragment() {
     private val binding get() = _binding!!
     
     @Inject
-    lateinit var apiService: ApiService
+    lateinit var clientRepository: com.lifestyler.android.domain.repository.ClientRepository
     
     private val adapter = MeasurementsAdapter()
     private lateinit var preferenceManager: PreferenceManager
@@ -65,9 +65,9 @@ class MeasurementsFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
-                val response = apiService.getMeasurements("getMeasurements", sheetName)
-                if (response.isSuccessful && response.body()?.success == true) {
-                    val data = response.body()!!
+                val result = clientRepository.getMeasurements(sheetName)
+                if (result.success) {
+                    val data = result
                     val items = mutableListOf<MeasurementUiItem>()
                     
                     data.joiningStatus?.let { status ->

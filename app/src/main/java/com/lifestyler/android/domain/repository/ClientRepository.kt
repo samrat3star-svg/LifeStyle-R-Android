@@ -20,4 +20,7 @@ interface ClientRepository {
     suspend fun getFastingSettings(sheetName: String): FastingSettingsResponse
     suspend fun logFasting(sheetName: String, duration: String): LogFastingResponse
     suspend fun followFasting(sheetName: String, fastingEndDate: String?): LogFastingResponse
+suspend fun getMeasurements(sheetName: String): com.lifestyler.android.data.model.FastingModels.MeasurementsResponse
+suspend fun getBreaks(sheetName: String): com.lifestyler.android.data.model.FastingModels.BreaksResponse
+fun clearCache()
 } 

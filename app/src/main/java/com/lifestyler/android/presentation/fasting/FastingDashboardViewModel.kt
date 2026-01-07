@@ -23,6 +23,7 @@ class FastingDashboardViewModel @Inject constructor(
     private val logFastingUseCase: LogFastingUseCase,
     private val preferenceManager: PreferenceManager,
     private val pollingManager: com.lifestyler.android.data.manager.PollingManager,
+    private val clientRepository: com.lifestyler.android.domain.repository.ClientRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
@@ -218,6 +219,14 @@ class FastingDashboardViewModel @Inject constructor(
                 
                 // Force reset the background timer ONLY AFTER success
                 pollingManager.setupPollingWorker(force = true)
+                
+                // Prefetch other data to populate cache if this is a manual/initial sync
+                if (lockoutMillis > 0) {
+                    viewModelScope.launch {
+                        clientRepository.getMeasurements(sheetName)
+                        clientRepository.getBreaks(sheetName)
+                    }
+                }
             }.onFailure { e ->
                 android.util.Log.e("FastingDashboard", "loadSettings FAILURE: ${e.message}")
                 preferenceManager.saveLastSyncError(e.message)
@@ -235,6 +244,7 @@ class FastingDashboardViewModel @Inject constructor(
     fun manualSync() {
         val sheetName = preferenceManager.getSheetName()
         if (sheetName != null) {
+            clientRepository.clearCache()
             viewModelScope.launch {
                 loadSettingsInternal(sheetName, lockoutMillis = 10000L)
             }
