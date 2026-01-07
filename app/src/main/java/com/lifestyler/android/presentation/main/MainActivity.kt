@@ -10,6 +10,7 @@ import com.lifestyler.android.data.worker.FastingPollingWorker
 import com.lifestyler.android.data.preference.PreferenceManager
 import com.lifestyler.android.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.lifecycle.lifecycleScope
 import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
@@ -55,11 +56,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkForUpdates() {
-        androidx.lifecycle.lifecycleScope.launchWhenStarted {
+        lifecycleScope.launchWhenStarted {
+            // Cleanup any old or redundant APK files from Downloads
+            updateManager.smartCleanup(com.lifestyler.android.BuildConfig.VERSION_NAME)
+            
             val result = checkForUpdateUseCase()
             result.onSuccess { updateInfo ->
                 if (updateInfo != null) {
-                    showUpdateDialog(updateInfo)
+                    val fileName = "LifeStyle-R-${updateInfo.version}.apk"
+                    if (!updateManager.installIfAlreadyDownloaded(fileName, updateInfo.version, autoTrigger = true)) {
+                        showUpdateDialog(updateInfo)
+                    }
+                } else {
+                    updateManager.setNotDownloading()
                 }
             }.onFailure {
                 // Silently ignore update check failures
@@ -68,14 +77,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showUpdateDialog(updateInfo: com.lifestyler.android.domain.entity.UpdateInfo) {
+        val isDownloading = preferenceManager.isUpdateDownloading()
+        val message = if (isDownloading) {
+            "A new version (${updateInfo.version}) is currently downloading..."
+        } else {
+            "A new version (${updateInfo.version}) is available. Would you like to update now?\n\nWhat's new:\n${updateInfo.releaseNotes}"
+        }
+
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("Update Available")
-            .setMessage("A new version (${updateInfo.version}) is available. Would you like to update now?\n\nWhat's new:\n${updateInfo.releaseNotes}")
-            .setPositiveButton("Update") { _, _ ->
-                updateManager.downloadAndInstall(updateInfo.downloadUrl, "LifeStyle-R-${updateInfo.version}.apk")
-                com.google.android.material.snackbar.Snackbar.make(binding.root, "Downloading update...", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show()
+            .setMessage(message)
+            .setPositiveButton(if (isDownloading) "Downloading..." else "Update") { dialog, _ ->
+                if (!isDownloading) {
+                    val started = updateManager.downloadAndInstall(updateInfo.downloadUrl, "LifeStyle-R-${updateInfo.version}.apk")
+                    if (started) {
+                        com.google.android.material.snackbar.Snackbar.make(binding.root, "Downloading update...", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show()
+                    } else {
+                        com.google.android.material.snackbar.Snackbar.make(binding.root, "Download already in progress.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show()
+                    }
+                }
+                dialog.dismiss()
             }
             .setNegativeButton("Later", null)
+            .apply {
+                if (isDownloading) setPositiveButton(null, null) // Disable positive interaction if downloading
+            }
             .show()
     }
 

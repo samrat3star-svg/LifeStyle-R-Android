@@ -47,21 +47,21 @@ interface ApiService {
         @Query("action") action: String,
         @Query("sheetName") sheetName: String,
         @Query("duration") duration: String
-    ): Response<LogFastingResponse>
+    ): Response<FastingSettingsResponse>
 
     @GET("exec")
     suspend fun followFasting(
         @Query("action") action: String,
         @Query("sheetName") sheetName: String,
         @Query("fastingEndDate") fastingEndDate: String? = null
-    ): Response<LogFastingResponse>
+    ): Response<FastingSettingsResponse>
 
     @GET("exec")
     suspend fun breakFasting(
         @Query("action") action: String,
         @Query("sheetName") sheetName: String,
         @Query("deviceTime") deviceTime: String
-    ): Response<LogFastingResponse>
+    ): Response<FastingSettingsResponse>
 
     @GET("exec")
     suspend fun getMeasurements(

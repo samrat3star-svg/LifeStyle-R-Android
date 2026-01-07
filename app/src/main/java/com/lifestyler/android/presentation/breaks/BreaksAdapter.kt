@@ -28,7 +28,8 @@ class BreaksAdapter : ListAdapter<BreakEntry, BreaksAdapter.ViewHolder>(DiffCall
         fun bind(item: BreakEntry) {
             binding.dateHeader.text = item.date ?: "Unknown Date"
             // Reason is hardcoded or from API
-            binding.reasonText.text = "Fasting Break (0 Hours)"
+            // Use the reason from the API, which now contains the real duration (e.g., "Break after 16 Hrs")
+            binding.reasonText.text = item.reason ?: "Manual Break"
         }
     }
 

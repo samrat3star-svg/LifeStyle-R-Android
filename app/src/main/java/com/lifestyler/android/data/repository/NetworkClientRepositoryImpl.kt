@@ -133,21 +133,42 @@ class NetworkClientRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun logFasting(sheetName: String, duration: String): LogFastingResponse {
+    override suspend fun logFasting(sheetName: String, duration: String): FastingSettingsResponse {
         val response = apiService.logFasting(action = "logFasting", sheetName = sheetName, duration = duration)
         if (response.isSuccessful) {
-            return response.body() ?: LogFastingResponse(false, "Empty response body")
+            val result = response.body() ?: FastingSettingsResponse(false, null, null, null, null, false, "Empty response body")
+             if (result.success) {
+                cachedFastingSettings = cachedFastingSettings + (sheetName to result)
+            }
+            return result
         } else {
-            return LogFastingResponse(false, "Failed to log fasting: ${response.message()}")
+            return FastingSettingsResponse(false, null, null, null, null, false, "Failed to log fasting: ${response.message()}")
         }
     }
 
-    override suspend fun followFasting(sheetName: String, fastingEndDate: String?): LogFastingResponse {
+    override suspend fun followFasting(sheetName: String, fastingEndDate: String?): FastingSettingsResponse {
         val response = apiService.followFasting(action = "followFasting", sheetName = sheetName, fastingEndDate = fastingEndDate)
         if (response.isSuccessful) {
-            return response.body() ?: LogFastingResponse(false, "Empty response body")
+            val result = response.body() ?: FastingSettingsResponse(false, null, null, null, null, false, "Empty response body")
+            if (result.success) {
+                cachedFastingSettings = cachedFastingSettings + (sheetName to result)
+            }
+            return result
         } else {
-            return LogFastingResponse(false, "Failed to follow fasting: ${response.message()}")
+            return FastingSettingsResponse(false, null, null, null, null, false, "Failed to follow fasting: ${response.message()}")
+        }
+    }
+
+    override suspend fun breakFasting(sheetName: String, deviceTime: String): FastingSettingsResponse {
+        val response = apiService.breakFasting(action = "breakFasting", sheetName = sheetName, deviceTime = deviceTime)
+        if (response.isSuccessful) {
+             val result = response.body() ?: FastingSettingsResponse(false, null, null, null, null, false, "Empty response body")
+             if (result.success) {
+                cachedFastingSettings = cachedFastingSettings + (sheetName to result)
+            }
+            return result
+        } else {
+            return FastingSettingsResponse(false, null, null, null, null, false, "Failed to break fast: ${response.message()}")
         }
     }
 
@@ -184,5 +205,6 @@ class NetworkClientRepositoryImpl @Inject constructor(
         cachedMeasurements = emptyMap()
         cachedBreaks = emptyMap()
         cachedClients = null
+        android.util.Log.d("NetworkRepo", "Cache cleared successfully")
     }
 }

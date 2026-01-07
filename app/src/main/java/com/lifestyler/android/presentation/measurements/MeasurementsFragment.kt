@@ -70,7 +70,7 @@ class MeasurementsFragment : Fragment() {
                     val data = result
                     val items = mutableListOf<MeasurementUiItem>()
                     
-                    data.joiningStatus?.let { status ->
+                    data.joiningStatus?.let { status: com.lifestyler.android.data.model.JoiningStatus ->
                         items.add(
                             MeasurementUiItem(
                                 date = "Joining Status",
@@ -85,7 +85,7 @@ class MeasurementsFragment : Fragment() {
                         )
                     }
                     
-                    data.history?.forEach { entry ->
+                    data.history?.forEach { entry: com.lifestyler.android.data.model.MeasurementEntry ->
                         items.add(
                             MeasurementUiItem(
                                 date = entry.date ?: "--",
@@ -106,7 +106,7 @@ class MeasurementsFragment : Fragment() {
                         binding.measurementsRecyclerView.scrollToPosition(items.size - 1)
                     }
                 } else {
-                    Toast.makeText(context, "Error: ${response.body()?.message ?: "Unknown error"}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Error: ${result.message ?: "Unknown error"}", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "Connection error: ${e.message}", Toast.LENGTH_LONG).show()

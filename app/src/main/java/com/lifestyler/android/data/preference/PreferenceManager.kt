@@ -26,7 +26,28 @@ class PreferenceManager(context: Context) {
         private const val KEY_LAST_SYNC_TIME = "last_sync_time"
         private const val KEY_NEXT_SYNC_TIME = "next_sync_time"
         private const val KEY_LAST_SYNC_ERROR = "last_sync_error"
+        private const val KEY_IS_BACKGROUND_SYNCING = "is_background_syncing"
+        private const val KEY_UPDATE_IS_DOWNLOADING = "update_is_downloading"
+        private const val KEY_LAST_AUTO_INSTALL_ATTEMPTED_VERSION = "last_auto_install_attempted_version"
     }
+
+    fun setLastAutoInstallAttemptedVersion(version: String) {
+        prefs.edit().putString(KEY_LAST_AUTO_INSTALL_ATTEMPTED_VERSION, version).apply()
+    }
+
+    fun getLastAutoInstallAttemptedVersion(): String? = prefs.getString(KEY_LAST_AUTO_INSTALL_ATTEMPTED_VERSION, null)
+
+    fun setUpdateDownloading(isDownloading: Boolean) {
+        prefs.edit().putBoolean(KEY_UPDATE_IS_DOWNLOADING, isDownloading).apply()
+    }
+
+    fun isUpdateDownloading(): Boolean = prefs.getBoolean(KEY_UPDATE_IS_DOWNLOADING, false)
+
+    fun setIsBackgroundSyncing(isSyncing: Boolean) {
+        prefs.edit().putBoolean(KEY_IS_BACKGROUND_SYNCING, isSyncing).apply()
+    }
+
+    fun isBackgroundSyncing(): Boolean = prefs.getBoolean(KEY_IS_BACKGROUND_SYNCING, false)
 
     fun saveSheetName(sheetName: String) {
         prefs.edit().putString(KEY_SHEET_NAME, sheetName).apply()

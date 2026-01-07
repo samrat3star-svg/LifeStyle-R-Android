@@ -3,6 +3,8 @@ package com.lifestyler.android.di
 import android.content.Context
 import com.lifestyler.android.data.preference.PreferenceManager
 import com.lifestyler.android.data.repository.UpdateRepositoryImpl
+import com.lifestyler.android.data.repository.NetworkClientRepositoryImpl
+import com.lifestyler.android.data.repository.AuthRepositoryImpl
 import com.lifestyler.android.domain.repository.AuthRepository
 import com.lifestyler.android.domain.repository.ClientRepository
 import com.lifestyler.android.domain.repository.UpdateRepository

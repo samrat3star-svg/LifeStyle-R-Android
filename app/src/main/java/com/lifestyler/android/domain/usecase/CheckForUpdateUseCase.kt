@@ -21,14 +21,29 @@ class CheckForUpdateUseCase @Inject constructor(
 
     private fun isNewerVersion(remoteVersion: String): Boolean {
         val currentVersion = BuildConfig.VERSION_NAME
-        // Strip 'v' if present (e.g. v1.0.0 -> 1.0.0)
+        
         val remoteClean = remoteVersion.removePrefix("v").trim()
         val currentClean = currentVersion.removePrefix("v").trim()
         
         if (remoteClean == currentClean) return false
         
-        // Simple comparison: if they are different, we assume remote is newer for this implementation
-        // A more complex semver comparison could be used here if needed
+        val remoteParts = remoteClean.split(".").mapNotNull { it.toIntOrNull() }
+        val currentParts = currentClean.split(".").mapNotNull { it.toIntOrNull() }
+        
+        val maxLen = maxOf(remoteParts.size, currentParts.size)
+        
+        for (i in 0 until maxLen) {
+            val remotePart = if (i < remoteParts.size) remoteParts[i] else 0
+            val currentPart = if (i < currentParts.size) currentParts[i] else 0
+            
+            if (remotePart > currentPart) return true
+            if (remotePart < currentPart) return false
+        }
+        
+        // If we reach here, versions are numerically identical (e.g., 1.0 vs 1.0.0)
+        // We should allow the update if the string representation is different,
+        // as the developer likely wants to transition to the new format.
+        // This will NOT loop because once updated, the strings will match exactly.
         return remoteClean != currentClean
     }
 }

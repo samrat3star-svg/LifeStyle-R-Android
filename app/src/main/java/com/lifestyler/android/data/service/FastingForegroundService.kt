@@ -24,12 +24,13 @@ import java.util.concurrent.TimeUnit
 interface FastingServiceEntryPoint {
     fun apiService(): ApiService
     fun preferenceManager(): PreferenceManager
+    fun clientRepository(): com.lifestyler.android.domain.repository.ClientRepository
 }
 
 class FastingForegroundService : Service() {
 
     private lateinit var preferenceManager: PreferenceManager
-    private lateinit var apiService: ApiService
+    private lateinit var clientRepository: com.lifestyler.android.domain.repository.ClientRepository
     private lateinit var wakeLock: android.os.PowerManager.WakeLock
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var pollingJob: Job? = null
@@ -59,8 +60,9 @@ class FastingForegroundService : Service() {
             applicationContext,
             FastingServiceEntryPoint::class.java
         )
-        apiService = entryPoint.apiService()
+        // apiService no longer needed directly
         preferenceManager = entryPoint.preferenceManager()
+        clientRepository = entryPoint.clientRepository()
         
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification("Syncing fasting status..."))
@@ -83,30 +85,46 @@ class FastingForegroundService : Service() {
                     
                     if (isEnabled && intervalMinutes < 15) {
                         // 1. Immediately schedule the NEXT sync for the UI timer
+                        // 1. Calculate Target
                         val nextSync = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(intervalMinutes)
-                        preferenceManager.saveNextSyncTime(nextSync)
+                        // DEFERRED: preferenceManager.saveNextSyncTime(nextSync)
                         
                         val sheetName = preferenceManager.getSheetName()
                         if (sheetName != null) {
                             android.util.Log.i("FastingService", ">>> Sync START for $sheetName")
-                            val response = apiService.getClientSettings("getClientSettings", sheetName)
-                            if (response.isSuccessful) {
-                                val settings = response.body()
-                                android.util.Log.d("FastingService", ">>> Sync SUCCESS: ${settings?.success}")
-                                if (settings?.success == true) {
-                                    handleSettingsUpdate(settings)
-                                }
+                            
+                            // VISIBILITY FIX: Set state and delay so UI has time to show "Syncing..."
+                            preferenceManager.setIsBackgroundSyncing(true)
+                            
+                            // CACHE FIX: Force fresh fetch for auto-sync
+                            clientRepository.clearCache()
+
+                            // Use Repository to hit CACHE first (populated by Atomic Update)
+                            val settings = clientRepository.getFastingSettings(sheetName)
+                            
+                            // Ensure the "Syncing..." spinner shows for at least 2 seconds
+                            delay(2000)
+                            
+                            android.util.Log.d("FastingService", ">>> Sync SUCCESS: ${settings.success}")
+                            if (settings.success) {
+                                handleSettingsUpdate(settings)
                             } else {
-                                android.util.Log.e("FastingService", ">>> Sync FAILED with code: ${response.code()}")
+                                android.util.Log.e("FastingService", ">>> Sync FAILED: ${settings.message}")
                             }
+
+                            // 2. Schedule NEXT sync only AFTER this one completes
+                            preferenceManager.saveNextSyncTime(nextSync)
+                            preferenceManager.setIsBackgroundSyncing(false)
                         }
                     } else if (!isEnabled || intervalMinutes >= 15) {
                         android.util.Log.d("FastingService", "Service stopping: isEnabled=$isEnabled, interval=$intervalMinutes")
+                        preferenceManager.setIsBackgroundSyncing(false)
                         stopSelf()
                         break
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("FastingService", "Polling error: ${e.message}")
+                    preferenceManager.setIsBackgroundSyncing(false)
                 }
                 
                 delay(TimeUnit.MINUTES.toMillis(preferenceManager.getPollingInterval().toLong()))
@@ -183,6 +201,8 @@ class FastingForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        android.util.Log.d("FastingService", "onStartCommand: Restarting polling loop")
+        startPolling()
         return START_STICKY
     }
 

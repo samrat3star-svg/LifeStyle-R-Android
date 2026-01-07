@@ -7,7 +7,6 @@ import com.lifestyler.android.domain.usecase.GetFastingSettingsUseCase
 import com.lifestyler.android.domain.usecase.LogFastingUseCase
 import com.lifestyler.android.data.api.ApiService
 import com.lifestyler.android.data.service.FastingForegroundService
-import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
@@ -97,9 +96,6 @@ class FastingDashboardViewModel @Inject constructor(
             android.util.Log.d("FastingDashboard", "Initializing timer for $isEnabled")
             pollingManager.setupPollingWorker()
         }
-        // NO LONGER CALLING loadSettings(sheetName) here! 
-        // The Foreground Service handles the actual sync.
-        // We just watch the PreferenceManager state change.
 
         val formattedLastSync = if (lastSync == 0L) "Never" else {
             val date = java.util.Date(lastSync)
@@ -107,12 +103,18 @@ class FastingDashboardViewModel @Inject constructor(
             sdf.format(date)
         }
 
-        val countdown = if (_state.value.isLoading || isSyncing) {
+        val isBackgroundSyncing = preferenceManager.isBackgroundSyncing()
+        val countdown = if (_state.value.isLoading || isSyncing || isBackgroundSyncing) {
             "Syncing..."
         } else if (nextSync == 0L) {
             "Initializing..."
         } else if (diffMillis <= 0) {
-           if (lastError != null) "Retrying..." else "Checking..."
+           // WATCHDOG: If sync is overdue by >5 seconds, force a retry
+           if (diffMillis < -5000 && isEnabled) {
+               android.util.Log.w("FastingDashboard", "Sync overdue by ${-diffMillis}ms. Forcing retry.")
+               pollingManager.setupPollingWorker(force = true)
+           }
+           if (lastError != null) "Retrying..." else "Syncing..."
         } else {
             val totalSeconds = diffMillis / 1000
             val minutes = totalSeconds / 60
@@ -133,20 +135,27 @@ class FastingDashboardViewModel @Inject constructor(
         val pEnd = preferenceManager.getLastEndTime()
         val pHours = preferenceManager.getLastFastingHours()
         
-        // We update the state if any persisted value differs from current UI state
-        // or if we are still in the initial loading state.
-        
         // CRITICAL: Do NOT update from prefs if we are manually loading (log/break).
-        // This prevents the polling loop from clearing the "isLoading" flag prematurely.
         if (_state.value.isLoading) return
 
-        if (pStart != null && (_state.value.startTime != pStart || _state.value.endTime != pEnd)) {
+        val pIsLogged = preferenceManager.isLoggedToday()
+        val pUser = preferenceManager.getUserName() ?: "User"
+        
+        val isDataChanged = pStart != null && (
+            _state.value.startTime != pStart || 
+            _state.value.endTime != pEnd || 
+            _state.value.fastingHours != pHours ||
+            _state.value.isFollowedToday != pIsLogged ||
+            _state.value.userName != pUser
+        )
+
+        if (isDataChanged) {
              _state.value = _state.value.copy(
-                 userName = preferenceManager.getUserName() ?: "User",
-                 startTime = pStart,
+                 userName = pUser,
+                 startTime = pStart!!,
                  endTime = pEnd ?: "--:--",
                  fastingHours = pHours ?: "--",
-                 isFollowedToday = preferenceManager.isLoggedToday(),
+                 isFollowedToday = pIsLogged,
                  isLoading = false
              )
         }
@@ -168,6 +177,8 @@ class FastingDashboardViewModel @Inject constructor(
             isSyncing = true
             // Force Loading State (Lock UI)
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
+            
+            // Note: Cache is already cleared by the caller (manualSync, logFasting, breakFasting)
             
             getFastingSettingsUseCase(sheetName).onSuccess { response ->
                 android.util.Log.d("FastingDashboard", "loadSettings SUCCESS: $response")
@@ -252,58 +263,105 @@ class FastingDashboardViewModel @Inject constructor(
     }
 
     fun logFasting(sheetName: String, duration: String) {
-        if (_state.value.isLoading) return
-        // SYNC UPDATE: Set loading immediately to block polling race condition
+        if (_state.value.isLoading || isSyncing) return
+        
+        isSyncing = true
         _state.value = _state.value.copy(isLoading = true, errorMessage = null)
+        clientRepository.clearCache()
         
         viewModelScope.launch {
-            logFastingUseCase(sheetName, duration).onSuccess { response ->
-                _state.value = _state.value.copy(
-                    isFollowedToday = true
-                )
-                
-                // Sync with 10s lockout
-                loadSettingsInternal(sheetName, lockoutMillis = 10000L)
-            }.onFailure { e ->
-                _state.value = _state.value.copy(isLoading = false, errorMessage = e.message)
+            try {
+                logFastingUseCase(sheetName, duration).onSuccess { response ->
+                    // User Request: Delay 3 seconds AFTER data arrives but BEFORE UI updates
+                    delay(3000)
+
+                    // ATOMIC UPDATE: Use the returned settings immediately
+                    val newStartTime = response.startTime ?: "--:--"
+                    val newEndTime = response.endTime ?: "--:--"
+                    val newFastingHours = response.fastingHours ?: "--"
+                    
+                    // Update Persistence
+                    preferenceManager.saveLastStartTime(newStartTime)
+                    preferenceManager.saveLastEndTime(newEndTime)
+                    preferenceManager.saveLastFastingHours(newFastingHours)
+
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        userName = response.userName ?: _state.value.userName,
+                        startTime = newStartTime,
+                        endTime = newEndTime,
+                        fastingHours = newFastingHours,
+                        isFollowedToday = response.isLoggedToday
+                    )
+                    
+                    // Reset polling
+                    pollingManager.setupPollingWorker(force = true)
+                }.onFailure { e ->
+                    // Even on failure, we might want to delay slightly or just show error
+                    _state.value = _state.value.copy(isLoading = false, errorMessage = e.message)
+                }
+            } finally {
+                isSyncing = false
             }
         }
     }
 
     fun breakFasting() {
-        if (_state.value.isLoading) return
-        val sheetName = preferenceManager.getSheetName() ?: return
+        if (_state.value.isLoading || isSyncing) return
         
-        // SYNC UPDATE: Set loading immediately to block polling race condition
+        isSyncing = true
         _state.value = _state.value.copy(isLoading = true, errorMessage = null)
+        clientRepository.clearCache()
 
         viewModelScope.launch {
             try {
-                val entryPoint = EntryPointAccessors.fromApplication(
-                    context.applicationContext,
-                    com.lifestyler.android.data.service.FastingServiceEntryPoint::class.java
-                )
-                val apiService = entryPoint.apiService()
-                
+                // Use Repository instead of direct API for cleaner architecture
+                val sheetName = preferenceManager.getSheetName()
+                if (sheetName == null) {
+                    _state.value = _state.value.copy(isLoading = false, errorMessage = "Sheet name missing")
+                    return@launch
+                }
+
                 val sdf = java.text.SimpleDateFormat("dd/MMM/yyyy, HH:mm", java.util.Locale.ENGLISH)
                 val deviceTime = sdf.format(java.util.Date())
                 
-                val response = apiService.breakFasting("breakfasting", sheetName, deviceTime)
-                if (response.isSuccessful && response.body()?.success == true) {
-                    // DEFER UPDATE: Do NOT set isFollowedToday = false here.
-                    // Keep the current state (Goal Achieved) visible under the overlay.
-                    // The sync below will update it when data is ready.
+                val response = clientRepository.breakFasting(sheetName, deviceTime)
+                
+                if (response.success) {
+                    // User Request: Delay 3 seconds AFTER data arrives but BEFORE UI updates
+                    delay(3000)
+
+                    // ATOMIC UPDATE: Use the returned settings immediately
+                    val newStartTime = response.startTime ?: "--:--"
+                    val newEndTime = response.endTime ?: "--:--"
+                    val newFastingHours = response.fastingHours ?: "--"
                     
-                    // Sync with 10s lockout
-                    loadSettingsInternal(sheetName, lockoutMillis = 10000L)
+                    // Update Persistence
+                    preferenceManager.saveLastStartTime(newStartTime)
+                    preferenceManager.saveLastEndTime(newEndTime)
+                    preferenceManager.saveLastFastingHours(newFastingHours)
+
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        userName = response.userName ?: _state.value.userName,
+                        startTime = newStartTime,
+                        endTime = newEndTime,
+                        fastingHours = newFastingHours,
+                        isFollowedToday = response.isLoggedToday
+                    )
+                    
+                    // Reset polling
+                    pollingManager.setupPollingWorker(force = true)
                 } else {
                     _state.value = _state.value.copy(
                         isLoading = false, 
-                        errorMessage = response.body()?.message ?: "Failed to break fast"
+                        errorMessage = response.message ?: "Failed to break fast"
                     )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isLoading = false, errorMessage = e.message)
+            } finally {
+                isSyncing = false
             }
         }
     }

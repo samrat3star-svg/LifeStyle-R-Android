@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.lifestyler.android.databinding.FragmentSettingsBinding
 import com.lifestyler.android.data.preference.PreferenceManager
 import android.media.RingtoneManager
@@ -112,21 +113,71 @@ class SettingsFragment : Fragment() {
     }
 
     private fun checkForManualUpdate() {
+        if (preferenceManager.isUpdateDownloading()) {
+            binding.updateNowButton.visibility = View.VISIBLE
+            binding.updateNowButton.isEnabled = false
+            binding.updateNowButton.text = "Downloading..."
+            android.widget.Toast.makeText(requireContext(), "Update already downloading...", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+
         binding.checkUpdateButton.isEnabled = false
         binding.checkUpdateButton.text = "Checking..."
         
-        androidx.lifecycle.lifecycleScope.launchWhenStarted {
+        lifecycleScope.launchWhenStarted {
+            // Cleanup old files before checking
+            updateManager.smartCleanup(com.lifestyler.android.BuildConfig.VERSION_NAME)
+            
             checkForUpdateUseCase().onSuccess { updateInfo ->
                 binding.checkUpdateButton.isEnabled = true
                 binding.checkUpdateButton.text = "Check for Updates"
                 
                 if (updateInfo != null) {
+                    val fileName = "LifeStyle-R-${updateInfo.version}.apk"
+                    val successfulDownloadId = updateManager.getSuccessfulDownloadId(fileName)
+                    
                     binding.updateNowButton.visibility = View.VISIBLE
-                    binding.updateNowButton.text = "Update to ${updateInfo.version}"
-                    binding.updateNowButton.setOnClickListener {
-                        updateManager.downloadAndInstall(updateInfo.downloadUrl, "LifeStyle-R-${updateInfo.version}.apk")
+                    // Show browser fallback whenever an update is available but not yet "installed" by the user
+                    binding.browserDownloadButton.visibility = View.VISIBLE
+                    binding.browserDownloadButton.setOnClickListener {
+                        updateManager.openInBrowser(updateInfo.downloadUrl)
+                    }
+
+                    if (successfulDownloadId != -1L) {
+                        binding.updateNowButton.isEnabled = true
+                        binding.updateNowButton.text = "Install ${updateInfo.version} Now"
+                        binding.updateNowButton.setOnClickListener {
+                            updateManager.installApk(successfulDownloadId)
+                            android.widget.Toast.makeText(requireContext(), "Starting install. If 'Parsing Error' persists, long-press to redownload.", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                        binding.updateNowButton.setOnLongClickListener {
+                            val started = updateManager.downloadAndInstall(updateInfo.downloadUrl, fileName)
+                            if (started) {
+                                binding.updateNowButton.isEnabled = false
+                                binding.updateNowButton.text = "Downloading..."
+                                android.widget.Toast.makeText(requireContext(), "Redownloading update...", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                            true
+                        }
+                    } else if (preferenceManager.isUpdateDownloading()) {
+                        binding.updateNowButton.isEnabled = false
+                        binding.updateNowButton.text = "Downloading..."
+                    } else {
+                        binding.updateNowButton.isEnabled = true
+                        binding.updateNowButton.text = "Update to ${updateInfo.version}"
+                        binding.updateNowButton.setOnClickListener {
+                            val started = updateManager.downloadAndInstall(updateInfo.downloadUrl, fileName)
+                            if (started) {
+                                binding.updateNowButton.isEnabled = false
+                                binding.updateNowButton.text = "Downloading..."
+                                android.widget.Toast.makeText(requireContext(), "Downloading update...", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        binding.updateNowButton.setOnLongClickListener(null)
                     }
                 } else {
+                    updateManager.setNotDownloading()
+                    binding.browserDownloadButton.visibility = View.GONE
                     android.widget.Toast.makeText(requireContext(), "Your app is up to date! ✅", android.widget.Toast.LENGTH_SHORT).show()
                 }
             }.onFailure {

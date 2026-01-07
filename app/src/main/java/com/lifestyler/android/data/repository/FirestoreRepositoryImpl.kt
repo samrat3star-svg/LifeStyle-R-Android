@@ -1,9 +1,7 @@
 package com.lifestyler.android.data.repository
 
 import com.lifestyler.android.data.datasource.FirestoreDataSource
-import com.lifestyler.android.data.model.LoginResponse
-import com.lifestyler.android.data.model.FastingSettingsResponse
-import com.lifestyler.android.data.model.LogFastingResponse
+import com.lifestyler.android.data.model.*
 import com.lifestyler.android.domain.entity.Client
 import com.lifestyler.android.domain.repository.ClientRepository
 import javax.inject.Inject
@@ -47,42 +45,34 @@ class FirestoreRepositoryImpl @Inject constructor(
     
     // Fasting Features - ClientRepository
     override suspend fun login(regCode: String, mobile: String): LoginResponse {
-        // Not implemented for Firestore - should use NetworkClientRepositoryImpl
-        return LoginResponse(
-            success = false,
-            sheetName = null,
-            userName = null,
-            message = "Firestore repository does not support login. Use NetworkClientRepositoryImpl.",
-            token = null
-        )
+        return LoginResponse(false, null, null, "Not implemented for Firestore", null)
     }
     
     override suspend fun getFastingSettings(sheetName: String): FastingSettingsResponse {
-        // Not implemented for Firestore - should use NetworkClientRepositoryImpl
-        return FastingSettingsResponse(
-            success = false,
-            fastingHours = null,
-            startTime = null,
-            endTime = null,
-            userName = null,
-            isLoggedToday = false,
-            message = "Firestore repository does not support fasting settings. Use NetworkClientRepositoryImpl."
-        )
+        return FastingSettingsResponse(false, null, null, null, null, false, "Not implemented for Firestore")
     }
     
-    override suspend fun logFasting(sheetName: String, duration: String): LogFastingResponse {
-        // Not implemented for Firestore - should use NetworkClientRepositoryImpl
-        return LogFastingResponse(
-            success = false,
-            message = "Firestore repository does not support log fasting. Use NetworkClientRepositoryImpl."
-        )
+    override suspend fun logFasting(sheetName: String, duration: String): FastingSettingsResponse {
+        return FastingSettingsResponse(false, null, null, null, null, false, "Not implemented for Firestore")
     }
 
-    override suspend fun followFasting(sheetName: String, fastingEndDate: String?): LogFastingResponse {
-        // Not implemented for Firestore - should use NetworkClientRepositoryImpl
-        return LogFastingResponse(
-            success = false,
-            message = "Firestore repository does not support follow fasting. Use NetworkClientRepositoryImpl."
-        )
+    override suspend fun followFasting(sheetName: String, fastingEndDate: String?): FastingSettingsResponse {
+        return FastingSettingsResponse(false, null, null, null, null, false, "Not implemented for Firestore")
     }
-} 
+    
+    override suspend fun breakFasting(sheetName: String, deviceTime: String): FastingSettingsResponse {
+        return FastingSettingsResponse(false, null, null, null, null, false, "Not implemented for Firestore")
+    }
+
+    override suspend fun getMeasurements(sheetName: String): MeasurementsResponse {
+        return MeasurementsResponse(false, null, null, null, "Not implemented for Firestore")
+    }
+
+    override suspend fun getBreaks(sheetName: String): BreaksResponse {
+        return BreaksResponse(false, null, "Not implemented for Firestore")
+    }
+
+    override fun clearCache() {
+        // No-op for Firestore
+    }
+}

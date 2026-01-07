@@ -1,13 +1,13 @@
 package com.lifestyler.android.domain.usecase
 
-import com.lifestyler.android.data.model.LogFastingResponse
+import com.lifestyler.android.data.model.FastingSettingsResponse
 import com.lifestyler.android.domain.repository.ClientRepository
 import javax.inject.Inject
 
 class LogFastingUseCase @Inject constructor(
     private val clientRepository: ClientRepository
 ) {
-    suspend operator fun invoke(sheetName: String, duration: String): Result<LogFastingResponse> {
+    suspend operator fun invoke(sheetName: String, duration: String): Result<FastingSettingsResponse> {
         return try {
             val result = clientRepository.logFasting(sheetName, duration)
             if (result.success) {

@@ -68,7 +68,7 @@ class BreaksFragment : Fragment() {
                 val result = clientRepository.getBreaks(sheetName)
                 if (result.success) {
                     val data = result
-                    val items = data.breaks ?: emptyList()
+                    val items = data.breaks ?: emptyList<com.lifestyler.android.data.model.BreakEntry>()
                     
                     if (items.isEmpty()) {
                         binding.emptyStateText.visibility = View.VISIBLE
@@ -78,7 +78,7 @@ class BreaksFragment : Fragment() {
                         binding.breaksRecyclerView.scrollToPosition(items.size - 1)
                     }
                 } else {
-                    Toast.makeText(context, "Error: ${response.body()?.message ?: "Unknown error"}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Error: ${result.message ?: "Unknown error"}", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "Connection error: ${e.message}", Toast.LENGTH_LONG).show()

@@ -92,6 +92,28 @@ class FastingDashboardFragment : Fragment() {
         if (_binding == null) return
         binding.syncStatusContainer.visibility = if (polling.isVisible) View.VISIBLE else View.GONE
         
+        val isSyncing = polling.nextSyncTime.contains("Syncing", ignoreCase = true) || 
+                        polling.nextSyncTime.contains("Retrying", ignoreCase = true) ||
+                        polling.nextSyncTime.contains("Initializing", ignoreCase = true)
+
+        if (isSyncing) {
+            // Force disable during background/foreground sync
+            binding.followButton.isEnabled = false
+            binding.followButton.alpha = 0.5f
+            binding.breakFastingButton.isEnabled = false
+            binding.breakFastingButton.alpha = 0.5f
+            binding.syncFab.isEnabled = false
+            binding.syncFab.alpha = 0.5f
+        } else if (!viewModel.state.value.isLoading) {
+             // Only re-enable if main loading state is also false
+            binding.followButton.isEnabled = true
+            binding.followButton.alpha = 1.0f
+            binding.breakFastingButton.isEnabled = true
+            binding.breakFastingButton.alpha = 1.0f
+            binding.syncFab.isEnabled = true
+            binding.syncFab.alpha = 1.0f
+        }
+        
         if (polling.errorMessage != null) {
             binding.syncStatusText.text = "Sync failed. ${polling.nextSyncTime}"
             binding.syncStatusText.setTextColor(android.graphics.Color.parseColor("#FF6B6B")) // Soft red
@@ -114,13 +136,23 @@ class FastingDashboardFragment : Fragment() {
             binding.syncFab.isEnabled = false
             binding.syncFab.alpha = 0.5f
         } else {
-            android.util.Log.d("FastingDashboard", "updateUI: ENABLING buttons")
-            binding.followButton.isEnabled = true
-            binding.followButton.alpha = 1.0f
-            binding.breakFastingButton.isEnabled = true
-            binding.breakFastingButton.alpha = 1.0f
-            binding.syncFab.isEnabled = true
-            binding.syncFab.alpha = 1.0f
+            // Check if background sync is preventing interaction
+            val polling = viewModel.pollingState.value
+            val isSyncing = polling.nextSyncTime.contains("Syncing", ignoreCase = true) || 
+                            polling.nextSyncTime.contains("Retrying", ignoreCase = true) ||
+                            polling.nextSyncTime.contains("Initializing", ignoreCase = true)
+            
+            if (!isSyncing) {
+                android.util.Log.d("FastingDashboard", "updateUI: ENABLING buttons")
+                binding.followButton.isEnabled = true
+                binding.followButton.alpha = 1.0f
+                binding.breakFastingButton.isEnabled = true
+                binding.breakFastingButton.alpha = 1.0f
+                binding.syncFab.isEnabled = true
+                binding.syncFab.alpha = 1.0f
+            } else {
+                android.util.Log.d("FastingDashboard", "updateUI: Buttons remain disabled (Background Sync)")
+            }
         }
 
         binding.userNameText.text = state.userName

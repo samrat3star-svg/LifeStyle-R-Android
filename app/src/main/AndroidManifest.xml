@@ -52,6 +52,14 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".data.receiver.UpdateDownloadReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".presentation.main.MainActivity"
             android:exported="false"
