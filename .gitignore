@@ -1,0 +1,44 @@
+# Android Studio / IntelliJ
+.idea/
+.gradle/
+build/
+app/build/
+*.iml
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+cmake-build-debug/
+
+# Android generated
+app/google-services.json
+
+# System / IDE
+.DS_Store
+Thumbs.db
+*.swp
+*~
+*.bak
+*.txt
+*.csv
+*.js
+*.py
+*.html
+*.gs
+
+# Gradle
+gradlew
+gradlew.bat
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+
+# Log files
+*.log
+
+# Keystore files
+*.jks
+*.keystore
+*.p12
+
+# Map secrets
+debug.keystore

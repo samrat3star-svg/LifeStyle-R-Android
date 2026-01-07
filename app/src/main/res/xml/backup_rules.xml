@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!--
+    This is a sample backup descriptor.
+    It contains configurations for which files to backup.
+    All files and databases in the sandbox are backed up by default.
+    The <include> and <exclude> tags below must be children of <full-backup-content>.
+    -->
+</full-backup-content> 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!--
+        All files and databases in the sandbox are backed up by default.
+        The <include> and <exclude> tags below must be children of <cloud-backup>.
+        -->
+    </cloud-backup>
+    <!--
+    <device-transfer>
+        ...
+    </device-transfer>
+    -->
+</data-extraction-rules> 

@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".presentation.main.clients.ClientDetailsFragment">
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:id="@+id/scrollViewContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonLayout"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Client Information"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Name:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewClientName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="John Doe" />
+
+            <EditText
+                android:id="@+id/editTextClientName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter name"
+                android:inputType="textPersonName"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Email:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewClientEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="john.doe@example.com" />
+
+            <EditText
+                android:id="@+id/editTextClientEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter email"
+                android:inputType="textEmailAddress"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phone:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewClientPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="+1234567890" />
+
+            <EditText
+                android:id="@+id/editTextClientPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter phone number"
+                android:inputType="phone"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Age:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewClientAge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="30" />
+
+            <EditText
+                android:id="@+id/editTextClientAge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter age"
+                android:inputType="number"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Gender:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewClientGender"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="Male" />
+
+            <EditText
+                android:id="@+id/editTextClientGender"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter gender"
+                android:inputType="text"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Weight (kg):"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewClientWeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="70.5" />
+
+            <EditText
+                android:id="@+id/editTextClientWeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter weight in kg"
+                android:inputType="numberDecimal"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Height (cm):"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewClientHeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="175" />
+
+            <EditText
+                android:id="@+id/editTextClientHeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter height in cm"
+                android:inputType="number"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Goal:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewClientGoal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="Weight Loss" />
+
+            <EditText
+                android:id="@+id/editTextClientGoal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter fitness goal"
+                android:inputType="text"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Medical Conditions:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewMedicalConditions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="None" />
+
+            <EditText
+                android:id="@+id/editTextMedicalConditions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter medical conditions"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Medications:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewMedications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="None" />
+
+            <EditText
+                android:id="@+id/editTextMedications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter medications"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Allergies:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewAllergies"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="None" />
+
+            <EditText
+                android:id="@+id/editTextAllergies"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter allergies"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Emergency Contact:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewEmergencyContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="Jane Doe" />
+
+            <EditText
+                android:id="@+id/editTextEmergencyContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter emergency contact name"
+                android:inputType="textPersonName"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Emergency Phone:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewEmergencyPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="+1234567890" />
+
+            <EditText
+                android:id="@+id/editTextEmergencyPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter emergency phone number"
+                android:inputType="phone"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Notes:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="Client prefers morning sessions" />
+
+            <EditText
+                android:id="@+id/editTextNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter notes"
+                android:inputType="textMultiLine"
+                android:minLines="3"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Status:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                tools:text="Active" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Registration Date:"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewRegistrationDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                tools:text="2024-01-15" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/buttonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/buttonEdit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Edit" />
+
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Save Changes"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout> 

@@ -1,0 +1,47 @@
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/auth_nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.lifestyler.android.presentation.auth.LoginFragment"
+        android:label="@string/login_title">
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_forgotPasswordFragment"
+            app:destination="@id/forgotPasswordFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_fastingDashboardFragment"
+            app:destination="@id/fastingDashboardFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.lifestyler.android.presentation.auth.RegisterFragment"
+        android:label="@string/register_title" />
+
+    <fragment
+        android:id="@+id/forgotPasswordFragment"
+        android:name="com.lifestyler.android.presentation.auth.ForgotPasswordFragment"
+        android:label="@string/forgot_password_title" />
+
+    <fragment
+        android:id="@+id/fastingDashboardFragment"
+        android:name="com.lifestyler.android.presentation.fasting.FastingDashboardFragment"
+        android:label="Fasting Dashboard">
+        <argument
+            android:name="sheetName"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_fastingDashboardFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.lifestyler.android.presentation.main.settings.SettingsFragment"
+        android:label="@string/settings_title" />
+</navigation>

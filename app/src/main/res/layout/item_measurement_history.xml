@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#E0E0E0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/dateHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#3c78d8"
+            android:padding="8dp"
+            android:text="Joining Status"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:stretchColumns="1">
+
+            <TableRow android:id="@+id/weightRow">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:text="Weight:"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/weightText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:textColor="@android:color/black" />
+            </TableRow>
+
+            <TableRow android:id="@+id/chestRow">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:text="Chest:"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/chestText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:textColor="@android:color/black" />
+            </TableRow>
+
+            <TableRow android:id="@+id/waistRow">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:text="Waist/Tummy:"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/waistText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:textColor="@android:color/black" />
+            </TableRow>
+
+            <TableRow android:id="@+id/hipsRow">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:text="Hips:"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/hipsText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:textColor="@android:color/black" />
+            </TableRow>
+
+            <TableRow android:id="@+id/heightRow" android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:text="Height:"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/heightText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:textColor="@android:color/black" />
+            </TableRow>
+
+            <TableRow android:id="@+id/targetRow" android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:text="Target Weight:"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/targetWeightText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="6dp"
+                    android:textColor="@android:color/black" />
+            </TableRow>
+
+        </TableLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

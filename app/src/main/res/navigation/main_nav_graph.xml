@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/fastingDashboardFragment">
+
+    <fragment
+        android:id="@+id/fastingDashboardFragment"
+        android:name="com.lifestyler.android.presentation.fasting.FastingDashboardFragment"
+        android:label="Fasting Dashboard">
+        <action
+            android:id="@+id/action_fastingDashboardFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.lifestyler.android.presentation.main.home.HomeFragment"
+        android:label="@string/home_title" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.lifestyler.android.presentation.main.profile.ProfileFragment"
+        android:label="@string/profile_title" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.lifestyler.android.presentation.main.settings.SettingsFragment"
+        android:label="@string/settings_title" />
+
+    <fragment
+        android:id="@+id/measurementsFragment"
+        android:name="com.lifestyler.android.presentation.measurements.MeasurementsFragment"
+        android:label="Body Measurements" />
+
+    <fragment
+        android:id="@+id/breaksFragment"
+        android:name="com.lifestyler.android.presentation.breaks.BreaksFragment"
+        android:label="Fasting Breaks" />
+
+    <fragment
+        android:id="@+id/clientsFragment"
+        android:name="com.lifestyler.android.presentation.main.clients.ClientsFragment"
+        android:label="@string/clients_title">
+        
+        <action
+            android:id="@+id/action_clientsFragment_to_clientDetailsFragment"
+            app:destination="@id/clientDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/clientDetailsFragment"
+        android:name="com.lifestyler.android.presentation.main.clients.ClientDetailsFragment"
+        android:label="Client Details">
+        
+        <argument
+            android:name="client"
+            app:argType="com.lifestyler.android.domain.entity.Client" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/appointmentsFragment"
+        android:name="com.lifestyler.android.presentation.main.appointments.AppointmentsFragment"
+        android:label="@string/appointments_title" />
+
+</navigation> 
